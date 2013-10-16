@@ -14,21 +14,21 @@ object Tondeuse {
 
 case class Point(x: Int, y: Int)
 
-case class Garden(bottomLeft: Point, topRight: Point)
+case class Garden(bottomLeft: Point, topRight: Point) {
+    def isInGarden(current: Point): Boolean =
+        bottomLeft.x <= current.x && current.x <= topRight.x && bottomLeft.y <= current.y && current.y <= topRight.y
+}
 
 case class Position(point: Point, orientation: Orientation) {
-    def move(implicit garden: Garden): Position = this.orientation match {
-        case North => if (isPossiblePosition(this.point.copy(y = this.point.y + 1))) this.copy(point = this.point.copy(y = this.point.y + 1)) else this
-        case South => if (isPossiblePosition(this.point.copy(y = this.point.y - 1))) this.copy(point = this.point.copy(y = this.point.y - 1)) else this
-        case East => if (isPossiblePosition(this.point.copy(x = this.point.x + 1))) this.copy(point = this.point.copy(x = this.point.x + 1)) else this
-        case West => if (isPossiblePosition(this.point.copy(x = this.point.x - 1))) this.copy(point = this.point.copy(x = this.point.x - 1)) else this
+    def move(garden: Garden): Position = {
+        val newPosition = this.orientation match { // Good candidate for Lenses !
+            case North => this.copy(point = this.point.copy(y = this.point.y + 1))
+            case South => this.copy(point = this.point.copy(y = this.point.y - 1))
+            case East => this.copy(point = this.point.copy(x = this.point.x + 1))
+            case West => this.copy(point = this.point.copy(x = this.point.x - 1))
+        }
+        if (garden.isInGarden(newPosition.point)) newPosition else this
     }
-
-    private def isPossiblePosition(current: Point)(implicit garden: Garden) =
-        garden.bottomLeft.x <= current.x &&
-            current.x <= garden.topRight.x &&
-            garden.bottomLeft.y <= current.y &&
-            current.y <= garden.topRight.y
 }
 
 sealed trait Orientation {
