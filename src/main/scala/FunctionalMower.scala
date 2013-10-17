@@ -3,17 +3,22 @@
  */
 object FunctionalMower {
 
-    def run(garden: Garden, instructions: List[Instruction]): State[List[Position], Position] = instructions match {
-        case Nil => State { previous => (previous, previous.head) }
-        case A::tail => State[List[Position], Position] { previous =>
-            val next = previous.head.move(garden)
-            (next::previous, next)
-        }.flatMap( _ => run(garden, tail) )
-        case head::tail => State[List[Position], Position] { previous =>
-            val next = previous.head.copy(orientation = previous.head.orientation.turn(head))
-            (next::previous, next)
-        }.flatMap( _ => run(garden, tail) )
+    def run(instructions: List[Instruction]): State[MowerState, Position] = instructions match {
+        case Nil => State { previous => (previous, previous.positions.head) }
+        case A::tail => State[MowerState, Position] { mowerState =>
+            val next = mowerState.currentPosition.move(mowerState.garden)
+            (mowerState.nextPosition(next), next)
+        }.flatMap( _ => run(tail) )
+        case head::tail => State[MowerState, Position] { mowerState =>
+            val next = mowerState.currentPosition.copy(orientation = mowerState.currentPosition.orientation.turn(head))
+            (mowerState.nextPosition(next), next)
+        }.flatMap( _ => run(tail) )
     }
+}
+
+case class MowerState(garden: Garden, positions: List[Position]) {
+    def currentPosition = positions.head
+    def nextPosition(next: Position) = this.copy(positions = next::positions)
 }
 
 case class Point(x: Int, y: Int)
