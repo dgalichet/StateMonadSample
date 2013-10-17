@@ -1,14 +1,14 @@
 /**
  * @author David Galichet.
  */
-object Tondeuse {
+object FunctionalMower {
 
     def run(garden: Garden, instructions: List[Instruction]): State[List[Position], Position] = instructions match {
         case Nil => State { previous => (previous, previous.head) }
         case A::tail => State[List[Position], Position] { previous =>
             val next = previous.head.move(garden)
             (next::previous, next)
-        }.flatMap( _ => run(garden, tail))
+        }.flatMap( _ => run(garden, tail) )
         case head::tail => State[List[Position], Position] { previous =>
             val next = previous.head.copy(orientation = previous.head.orientation.turn(head))
             (next::previous, next)
