@@ -3,12 +3,16 @@
  */
 object Tondeuse {
 
-    def run(garden: Garden, instructions: List[Instruction]): Position => Position = { initial =>
-        instructions match {
-            case head::tail if head == A => run(garden, tail)(initial.move(garden))
-            case head::tail => run(garden, tail)(initial.copy(orientation = initial.orientation.turn(head)))
-            case _ => initial
-        }
+    def run(garden: Garden, instructions: List[Instruction]): State[List[Position], Position] = instructions match {
+        case Nil => State { previous => (previous, previous.head) }
+        case A::tail => State[List[Position], Position] { previous =>
+            val next = previous.head.move(garden)
+            (next::previous, next)
+        }.flatMap( _ => run(garden, tail))
+        case head::tail => State[List[Position], Position] { previous =>
+            val next = previous.head.copy(orientation = previous.head.orientation.turn(head))
+            (next::previous, next)
+        }.flatMap( _ => run(garden, tail) )
     }
 }
 
