@@ -4,7 +4,7 @@
 object FunctionalMower {
 
     def stackInstructions(instructions: List[Instruction]): State[MowerState, Position] = instructions match {
-        case Nil => State { previous => (previous, previous.positions.head) }
+        case Nil => State { mowerState => (mowerState, mowerState.currentPosition) }
         case A::tail => State[MowerState, Position] { mowerState =>
             val next = mowerState.currentPosition.move(mowerState.garden)
             (mowerState.nextPosition(next), next)
@@ -22,14 +22,13 @@ object FunctionalMower {
         } yield (r)
 
     def processingRate(s: MowerState): Double = {
-        val totalSize = (s.garden.topRight.x - s.garden.bottomLeft.x) * (s.garden.topRight.y - s.garden.bottomLeft.y)
         val processedSize = s.positions.map(_.point).distinct.size
-        processedSize.toDouble / totalSize.toDouble
+        processedSize.toDouble / s.garden.totalSize.toDouble
     }
 }
 
 case class MowerState(garden: Garden, positions: List[Position]) {
-    def currentPosition = positions.head
+    lazy val currentPosition = positions.head
     def nextPosition(next: Position) = this.copy(positions = next::positions)
 }
 
@@ -37,8 +36,11 @@ case class Point(x: Int, y: Int)
 
 case class Garden(bottomLeft: Point, topRight: Point) {
     assert(bottomLeft.x < topRight.x && bottomLeft.y < topRight.y)
+
     def isInGarden(current: Point): Boolean =
         bottomLeft.x <= current.x && current.x <= topRight.x && bottomLeft.y <= current.y && current.y <= topRight.y
+
+    lazy val totalSize = (topRight.x - bottomLeft.x) * (topRight.y - bottomLeft.y)
 }
 
 case class Position(point: Point, orientation: Orientation) {
