@@ -7,7 +7,7 @@ class FunctionalMowerTest extends Specification {
 
     val playGround = Garden(Point(0, 0), Point(5, 5))
 
-    "A tondeuse" should {
+    "A mower" should {
         "be West oriented when turned left and initial orientation is North" in {
             val initialState = MowerState(playGround, List(Position(Point(2, 2), North)))
             FunctionalMower.stackInstructions(List(L)).run(initialState)._2 === Position(Point(2, 2), West)
@@ -48,7 +48,19 @@ class FunctionalMowerTest extends Specification {
             val initialState = MowerState(playGround, List(Position(Point(3, 3), East)))
             FunctionalMower.stackInstructions(List(A, A, R, A, A, R, A, R, R, A)).run(initialState)._2 === Position(Point(5, 1), East)
         }
-        //"be able to know which percentage of grass has been cut"
+        "be able to know which percentage of grass has been cut" in {
+            def createPositions(pos: List[(Int, Int)]): List[Position] = pos.map{ case (x, y) => Position(Point(x, y), North) }
+            val fivePositions = createPositions(List((1, 1), (2, 2), (3, 3), (4, 4), (5, 5)))
+            val fivePositionsWithDuplicate = createPositions(List((1, 1), (2, 2), (1, 1), (4, 4), (5, 5)))
+            FunctionalMower.processingRate(MowerState(playGround, Nil)) === 0.0 and
+                fivePositions.size === 5 and
+                FunctionalMower.processingRate(MowerState(playGround, fivePositions)) === 0.2 and
+                FunctionalMower.processingRate(MowerState(playGround, fivePositionsWithDuplicate)) === 0.16
+        }
+        "We can transform the state to have a result as percentage of cutted grass" in {
+            val initialState = MowerState(playGround, List(Position(Point(3, 3), East)))
+            FunctionalMower.stateProcessingRate(List(A, A, R, A, A)).run(initialState)._2 === 0.2
 
+        }
     }
 }

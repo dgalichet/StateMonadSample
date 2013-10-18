@@ -15,6 +15,7 @@ trait State[S, +A] {
         f(a).run(s1)
     }
 
+
 }
 
 object State {
@@ -22,4 +23,8 @@ object State {
         def run(initial: S): (S, A) = f(initial)
 
     }
+
+    def get[S]: State[S, S] = State { s => (s, s) }
+
+    def gets[S, A](f: S => A): State[S, A] = State { s => (s, f(s)) }
 }

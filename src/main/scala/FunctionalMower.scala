@@ -14,6 +14,15 @@ object FunctionalMower {
             (mowerState.nextPosition(next), next)
         }.flatMap( _ => stackInstructions(tail) )
     }
+
+    def stateProcessingRate(instructions: List[Instruction]): State[MowerState, Double] =
+        stackInstructions(instructions).flatMap( _ => State.gets(FunctionalMower.processingRate) )
+
+    def processingRate(s: MowerState): Double = {
+        val totalSize = (s.garden.topRight.x - s.garden.bottomLeft.x) * (s.garden.topRight.y - s.garden.bottomLeft.y)
+        val processedSize = s.positions.map(_.point).distinct.size
+        processedSize.toDouble / totalSize.toDouble
+    }
 }
 
 case class MowerState(garden: Garden, positions: List[Position]) {
