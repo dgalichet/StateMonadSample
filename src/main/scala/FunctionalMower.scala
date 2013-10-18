@@ -36,6 +36,7 @@ case class MowerState(garden: Garden, positions: List[Position]) {
 case class Point(x: Int, y: Int)
 
 case class Garden(bottomLeft: Point, topRight: Point) {
+    assert(bottomLeft.x < topRight.x && bottomLeft.y < topRight.y)
     def isInGarden(current: Point): Boolean =
         bottomLeft.x <= current.x && current.x <= topRight.x && bottomLeft.y <= current.y && current.y <= topRight.y
 }
