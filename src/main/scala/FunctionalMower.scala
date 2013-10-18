@@ -16,7 +16,10 @@ object FunctionalMower {
     }
 
     def stateProcessingRate(instructions: List[Instruction]): State[MowerState, Double] =
-        stackInstructions(instructions).flatMap( _ => State.gets(FunctionalMower.processingRate) )
+        for {
+            s <- stackInstructions(instructions)
+            r <- State.gets(FunctionalMower.processingRate)
+        } yield (r)
 
     def processingRate(s: MowerState): Double = {
         val totalSize = (s.garden.topRight.x - s.garden.bottomLeft.x) * (s.garden.topRight.y - s.garden.bottomLeft.y)
