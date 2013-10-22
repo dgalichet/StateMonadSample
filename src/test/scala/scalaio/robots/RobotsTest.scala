@@ -10,13 +10,13 @@ class RobotsTest extends Specification {
 
     val simplePlaygroundState = PlaygroundState(
         Playground(Point(0, 0), Point(3, 3), Set.empty[Point]),
-        RobotState(R1, Position(0, 0, North)::Nil),
-        RobotState(R2, Position(3, 3, South)::Nil))
+        Robot(R1, Position(0, 0, North)::Nil),
+        Robot(R2, Position(3, 3, South)::Nil))
 
     val playGroundWithCoins = PlaygroundState(
     Playground(Point(0, 0), Point(3, 3), Set(Point(0, 1), Point(1, 2), Point(3, 1))),
-        RobotState(R1, Position(0, 0, North)::Nil),
-        RobotState(R2, Position(3, 3, South)::Nil))
+        Robot(R1, Position(0, 0, North)::Nil),
+        Robot(R2, Position(3, 3, South)::Nil))
 
     "A robots simulator" should {
         "return initial state if no instruction is provided" in {

@@ -11,7 +11,7 @@ object Robots {
         case Nil if r2 == Nil => State { s => (s, s.scores) }
         case Nil => State { s: PlaygroundState => (s.swapRobots(), s.scores) }.flatMap { _ => compileInstructions(r2, r1) }
         case head::tail => State[PlaygroundState, (Score, Score)] { s =>
-            val s1 = s.processInstruction(head)
+            val s1 = processInstruction(head)(s)
             (s1.swapRobots(), s1.scores)
         }.flatMap { _ => compileInstructions(r2, tail) }
     }
@@ -23,43 +23,43 @@ object Robots {
         }
         s"Robot ${winner.player} wins againts ${looser.player} with a score of ${winner.score} over ${looser.score}"
     }
+
+    def processInstruction(instruction: Instruction): PlaygroundState => PlaygroundState = instruction match {
+        case A => moveR1
+        case i => turnR1(i)
+    }
+
+    private def moveR1(s: PlaygroundState): PlaygroundState = {
+        val next = s.r1.currentPosition.move(s)
+        if (s.playground.coins.contains(next.point)) {
+            s.copy(playground = s.playground.copy(coins = s.playground.coins - next.point), r1 = s.r1.addCoin(next.point).addPosition(next))
+        } else {
+            s.copy(r1 = s.r1.addPosition(next))
+        }
+    }
+
+    private def turnR1(instruction: Instruction)(s: PlaygroundState): PlaygroundState = {
+        val next = s.r1.currentPosition.turn(instruction)
+        s.copy(r1 = s.r1.addPosition(next))
+    }
 }
 
-case class PlaygroundState(playground: Playground, r1: RobotState, r2: RobotState) {
+case class PlaygroundState(playground: Playground, r1: Robot, r2: Robot) {
     def isPossiblePosition(pos: Position): Boolean = playground.isInPlayground(pos.point) && r2.currentPosition.point != pos.point
 
     lazy val scores: (Score, Score) = (r1.score, r2.score)
 
     def swapRobots(): PlaygroundState = this.copy(r1 = r2, r2 = r1)
-
-    def processInstruction(instruction: Instruction): PlaygroundState = instruction match {
-        case A => moveR1()
-        case i => turnR1(i)
-    }
-
-    private def moveR1(): PlaygroundState = {
-        val next = r1.currentPosition.move(this)
-        if (playground.coins.contains(next.point)) {
-            this.copy(playground = playground.copy(coins = playground.coins - next.point), r1 = r1.addCoin(next.point).addPosition(next))
-        } else {
-            this.copy(r1 = r1.addPosition(next))
-        }
-    }
-
-    private def turnR1(instruction: Instruction): PlaygroundState = {
-        val next = r1.currentPosition.turn(instruction)
-        this.copy(r1 = r1.addPosition(next))
-    }
 }
 
-case class RobotState(player: Player, positions: List[Position], coins: List[Point] = Nil) {
+case class Robot(player: Player, positions: List[Position], coins: List[Point] = Nil) {
     lazy val currentPosition = positions.head
 
     lazy val score: Score = Score(player, coins.size)
 
-    def addPosition(next: Position): RobotState = this.copy(positions = next::positions)
+    def addPosition(next: Position): Robot = this.copy(positions = next::positions)
 
-    def addCoin(coin: Point): RobotState = this.copy(coins = coin::coins)
+    def addCoin(coin: Point): Robot = this.copy(coins = coin::coins)
 }
 
 sealed trait Player
