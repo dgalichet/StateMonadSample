@@ -1,3 +1,5 @@
+package scalaio
+
 /**
  * @author David Galichet.
  */
@@ -14,8 +16,6 @@ trait State[S, +A] {
         val (s1, a) = run(s)
         f(a).run(s1)
     }
-
-
 }
 
 object State {

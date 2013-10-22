@@ -1,3 +1,7 @@
+package scalaio.mower
+
+import scalaio.State
+
 /**
  * @author David Galichet.
  */
