@@ -8,13 +8,17 @@ import scalaio.State
  */
 class RobotsTest extends Specification {
 
-    val simplePlaygroundState = PlaygroundState(
-        Playground(Point(0, 0), Point(3, 3), Set.empty[Point]),
+    val simplePlaygroundState = Playground(
+        Point(0, 0),
+        Point(3, 3),
+        Set.empty[Point],
         Robot(R1, Position(0, 0, North)::Nil),
         Robot(R2, Position(3, 3, South)::Nil))
 
-    val playGroundWithCoins = PlaygroundState(
-    Playground(Point(0, 0), Point(3, 3), Set(Point(0, 1), Point(1, 2), Point(3, 1))),
+    val playGroundWithCoins = Playground(
+        Point(0, 0),
+        Point(3, 3),
+        Set(Point(0, 1), Point(1, 2), Point(3, 1)),
         Robot(R1, Position(0, 0, North)::Nil),
         Robot(R2, Position(3, 3, South)::Nil))
 
@@ -38,7 +42,7 @@ class RobotsTest extends Specification {
         "We can also use for comprehension to get final position" in {
             val stateP = for {
                 state <- Robots.compileInstructions(List(A, A, R, A), List(A, A, R, A))
-                stateP <- State.gets { s: PlaygroundState => (s.r1, s.r2) }
+                stateP <- State.gets { s: Playground => (s.r1, s.r2) }
             } yield stateP
             val (_, (r1, r2)) = stateP.run(simplePlaygroundState)
             r1.player === R1 and r1.currentPosition === Position(1, 2, East) and

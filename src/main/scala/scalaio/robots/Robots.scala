@@ -7,10 +7,10 @@ import scalaio.State
  */
 object Robots {
 
-    def compileInstructions(r1: List[Instruction], r2: List[Instruction]): State[PlaygroundState, (Score, Score)] = r1 match {
+    def compileInstructions(r1: List[Instruction], r2: List[Instruction]): State[Playground, (Score, Score)] = r1 match {
         case Nil if r2 == Nil => State { s => (s, s.scores) }
-        case Nil => State { s: PlaygroundState => (s.swapRobots(), s.scores) }.flatMap { _ => compileInstructions(r2, r1) }
-        case head::tail => State[PlaygroundState, (Score, Score)] { s =>
+        case Nil => State { s: Playground => (s.swapRobots(), s.scores) }.flatMap { _ => compileInstructions(r2, r1) }
+        case head::tail => State[Playground, (Score, Score)] { s =>
             val s1 = processInstruction(head)(s)
             (s1.swapRobots(), s1.scores)
         }.flatMap { _ => compileInstructions(r2, tail) }
@@ -24,33 +24,42 @@ object Robots {
         s"Robot ${winner.player} wins againts ${looser.player} with a score of ${winner.score} over ${looser.score}"
     }
 
-    def processInstruction(instruction: Instruction): PlaygroundState => PlaygroundState = instruction match {
+    def processInstruction(instruction: Instruction): Playground => Playground = instruction match {
         case A => moveR1
         case i => turnR1(i)
     }
 
-    private def moveR1(s: PlaygroundState): PlaygroundState = {
+    private def moveR1(s: Playground): Playground = {
         val next = s.r1.currentPosition.move(s)
-        if (s.playground.coins.contains(next.point)) {
-            s.copy(playground = s.playground.copy(coins = s.playground.coins - next.point), r1 = s.r1.addCoin(next.point).addPosition(next))
+        if (s.coins.contains(next.point)) {
+            s.copy(coins = s.coins - next.point, r1 = s.r1.addCoin(next.point).addPosition(next))
         } else {
             s.copy(r1 = s.r1.addPosition(next))
         }
     }
 
-    private def turnR1(instruction: Instruction)(s: PlaygroundState): PlaygroundState = {
+    private def turnR1(instruction: Instruction)(s: Playground): Playground = {
         val next = s.r1.currentPosition.turn(instruction)
         s.copy(r1 = s.r1.addPosition(next))
     }
 }
 
-case class PlaygroundState(playground: Playground, r1: Robot, r2: Robot) {
-    def isPossiblePosition(pos: Position): Boolean = playground.isInPlayground(pos.point) && r2.currentPosition.point != pos.point
+case class Playground(bottomLeft: Point, topRight: Point, coins: Set[Point], r1: Robot, r2: Robot) {
+
+    assert(bottomLeft.x < topRight.x && bottomLeft.y < topRight.y,
+        s"Bad Playground definition. (${bottomLeft.x}, ${bottomLeft.y}) must be < (${topRight.x}, ${topRight.y})")
+    assert(coins.foldLeft(true)(_ && isInPlayground(_)), "All coins must be in Playground !")
+
+    def isInPlayground(point: Point): Boolean =
+        bottomLeft.x <= point.x && point.x <= topRight.x && bottomLeft.y <= point.y && point.y <= topRight.y
+
+    def isPossiblePosition(pos: Position): Boolean = isInPlayground(pos.point) && r2.currentPosition.point != pos.point
 
     lazy val scores: (Score, Score) = (r1.score, r2.score)
 
-    def swapRobots(): PlaygroundState = this.copy(r1 = r2, r2 = r1)
+    def swapRobots(): Playground = this.copy(r1 = r2, r2 = r1)
 }
+
 
 case class Robot(player: Player, positions: List[Position], coins: List[Point] = Nil) {
     lazy val currentPosition = positions.head
@@ -70,18 +79,8 @@ case class Score(player: Player, score: Int)
 
 case class Point(x: Int, y: Int)
 
-case class Playground(bottomLeft: Point, topRight: Point, coins: Set[Point]) {
-
-    assert(bottomLeft.x < topRight.x && bottomLeft.y < topRight.y,
-        s"Bad Playground definition. (${bottomLeft.x}, ${bottomLeft.y}) must be < (${topRight.x}, ${topRight.y})")
-    assert(coins.foldLeft(true)(_ && isInPlayground(_)), "All coins must be in Playground !")
-
-    def isInPlayground(point: Point): Boolean =
-        bottomLeft.x <= point.x && point.x <= topRight.x && bottomLeft.y <= point.y && point.y <= topRight.y
-}
-
 case class Position(point: Point, direction: Direction) {
-    def move(s: PlaygroundState): Position = {
+    def move(s: Playground): Position = {
         val newPosition = this.direction match { // Good candidate for Lenses !
             case North => this.copy(point = this.point.copy(y = this.point.y + 1))
             case South => this.copy(point = this.point.copy(y = this.point.y - 1))
