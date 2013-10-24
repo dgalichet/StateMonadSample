@@ -67,6 +67,17 @@ class RobotsTest extends Specification {
                 .run(playGroundWithCoins)
             result === "Robot R1 wins againts R2 with a score of 2 over 1"
         }
+        "We simulate competition" in {
+            val playground = Playground(
+                Point(0, 0), Point(3, 3),
+                Set(Point(0, 1), Point(0, 3), Point(1, 2), Point(2, 2), Point(3, 1)),
+                Robot(R1, List(Position(0, 0, North))),
+                Robot(R2, List(Position(3, 3, South))))
+            val (_, result) = Robots.compileInstructions(List(A, A, R, A, A, A), List(A, R, A, L, A, A))
+                .map(Robots.declareWinners)
+                .run(playground)
+            result === "Robot R1 wins againts R2 with a score of 2 over 1"
+        }
     }
 
 }

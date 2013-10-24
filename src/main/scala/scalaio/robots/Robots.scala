@@ -7,13 +7,13 @@ import scalaio.State
  */
 object Robots {
 
-    def compileInstructions(r1: List[Instruction], r2: List[Instruction]): State[Playground, (Score, Score)] = r1 match {
-        case Nil if r2 == Nil => State { s => (s, s.scores) }
-        case Nil => State { s: Playground => (s.swapRobots(), s.scores) }.flatMap { _ => compileInstructions(r2, r1) }
+    def compileInstructions(i1: List[Instruction], i2: List[Instruction]): State[Playground, (Score, Score)] = i1 match {
+        case Nil if i2 == Nil => State.gets(_.scores)
+        case Nil => State[Playground, (Score, Score)] { s => (s.swapRobots(), s.scores) }.flatMap { _ => compileInstructions(i2, i1) }
         case head::tail => State[Playground, (Score, Score)] { s =>
             val s1 = processInstruction(head)(s)
             (s1.swapRobots(), s1.scores)
-        }.flatMap { _ => compileInstructions(r2, tail) }
+        }.flatMap { _ => compileInstructions(i2, tail) }
     }
 
     def declareWinners(scores: (Score, Score)): String = {
@@ -24,23 +24,17 @@ object Robots {
         s"Robot ${winner.player} wins againts ${looser.player} with a score of ${winner.score} over ${looser.score}"
     }
 
-    def processInstruction(instruction: Instruction): Playground => Playground = instruction match {
-        case A => moveR1
-        case i => turnR1(i)
-    }
+    def processInstruction(i: Instruction)(s: Playground): Playground = {
+        val next = i match {
+            case A => s.r1.currentPosition.move(s)
+            case i => s.r1.currentPosition.turn(i)
+        }
 
-    private def moveR1(s: Playground): Playground = {
-        val next = s.r1.currentPosition.move(s)
         if (s.coins.contains(next.point)) {
             s.copy(coins = s.coins - next.point, r1 = s.r1.addCoin(next.point).addPosition(next))
         } else {
             s.copy(r1 = s.r1.addPosition(next))
         }
-    }
-
-    private def turnR1(instruction: Instruction)(s: Playground): Playground = {
-        val next = s.r1.currentPosition.turn(instruction)
-        s.copy(r1 = s.r1.addPosition(next))
     }
 }
 
@@ -133,3 +127,4 @@ sealed trait Instruction
 case object L extends Instruction // turn Left
 case object R extends Instruction // turn Right
 case object A extends Instruction // Go on
+
