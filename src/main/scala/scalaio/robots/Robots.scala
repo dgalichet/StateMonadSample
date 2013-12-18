@@ -24,6 +24,14 @@ object Robots {
         s"Robot ${winner.player} wins againts ${looser.player} with a score of ${winner.score} over ${looser.score}"
     }
 
+    def testForComprehension(i1: List[Instruction], i2: List[Instruction]): State[Playground, (String, (Position, Position))] = {
+        def getPositions(p: Playground): (Position, Position) = (p.r1.currentPosition, p.r2.currentPosition)
+        for {
+            scores <- compileInstructions(i1, i2)
+            positions <- State.gets(getPositions)
+        } yield (declareWinners(scores), positions)
+    }
+
     def processInstruction(i: Instruction)(s: Playground): Playground = {
         val next = i match {
             case A => s.r1.currentPosition.move(s)
